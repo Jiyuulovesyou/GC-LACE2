@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#FF9A62">
+    <title>GC-LACE — Content manager</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <header>
+        <a class="brand" href="StudyLace.html"><img class="brand-mark" src="GC-LACE.png" alt="GC-LACE logo"><span class="brand-name">GC-<span>LACE</span> <span style="color:var(--muted);font-size:12px;font-weight:600">Content manager</span></span></a>
+        <div class="header-actions">
+            <a class="button" href="StudyLace.html">View website</a>
+        </div>
+    </header>
+    <main>
+        <section class="intro">
+            <h1>Manage your campus hub</h1>
+            <p>Block-representative tool for updating the homepage, coursework, course resources, announcements, events, and Q&amp;A. Changes publish to the shared site when the backend is available; otherwise they are saved in this browser.</p>
+        </section>
+        <aside class="notice"><strong>Shared publishing:</strong> Start the site with <code>npm start</code> to save content on the server and share it with all students. For Google sign-in, add <code>http://localhost:3000</code> and your deployed site origin to the OAuth client’s authorized JavaScript origins, then set <code>$env:GOOGLE_CLIENT_ID="your-client-id"; npm start</code> in PowerShell. If the backend is unavailable, content changes are saved in this browser only. The backend has no admin authentication; only expose it to trusted users.</aside>
+        <section class="toolbar" aria-label="Content backup tools">
+            <div><strong>Content tools</strong><p>Publish updates to the website or export a backup before switching devices.</p></div>
+            <div class="toolbar-actions">
+                <button class="button primary" id="publishButton" type="button">Publish website data file</button>
+                <button class="button" id="exportButton" type="button">Export backup</button>
+                <button class="button" id="importButton" type="button">Import backup</button>
+                <button class="button danger" id="resetButton" type="button">Restore sample content</button>
+                <input id="importFile" type="file" accept="application/json,.json" hidden>
+            </div>
+        </section>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+        <div class="sections">
+            <section class="card" id="heroSection">
+                <div class="section-head"><div><h2>Homepage introduction</h2><p>Edit the main dashboard headline and welcome caption.</p></div></div>
+                <form id="heroForm" class="form-grid">
+                    <div class="field full"><label for="heroTitle">Headline</label><input id="heroTitle" name="title" required maxlength="100"></div>
+                    <div class="field full"><label for="heroDescription">Introduction caption</label><textarea id="heroDescription" name="description" required maxlength="300"></textarea></div>
+                    <div class="field full"><div class="form-actions"><button class="button primary" type="submit">Save homepage introduction</button></div></div>
+                </form>
+            </section>
+            <section class="card editor-section" data-kind="coursework">
+                <div class="section-head"><div><h2>Coursework</h2><p>Add, edit, or remove coursework and due dates.</p></div><button class="button primary add-button" type="button">Add coursework</button></div>
+                <div class="item-list"></div><div class="form-wrap"></div>
+            </section>
+            <section class="card editor-section" data-kind="courses">
+                <div class="section-head"><div><h2>Courses and resources</h2><p>Manage course names, reviewer links, Google Meet, and Drive folders.</p></div><button class="button primary add-button" type="button">Add course</button></div>
+                <div class="item-list"></div><div class="form-wrap"></div>
+            </section>
+            <section class="card editor-section" data-kind="announcements">
+                <div class="section-head"><div><h2>Announcements</h2><p>Post class, department, and school-wide updates.</p></div><button class="button primary add-button" type="button">Add announcement</button></div>
+                <div class="item-list"></div><div class="form-wrap"></div>
+            </section>
+            <section class="card editor-section" data-kind="events">
+                <div class="section-head"><div><h2>Events</h2><p>Manage upcoming class and campus events.</p></div><button class="button primary add-button" type="button">Add event</button></div>
+                <div class="item-list"></div><div class="form-wrap"></div>
+            </section>
+            <section class="card editor-section" data-kind="questions">
+                <div class="section-head"><div><h2>Student Q&amp;A / helpful answers</h2><p>Publish useful questions and answers for students. Student-submitted questions are only shown in the current browser preview.</p></div><button class="button primary add-button" type="button">Add Q&amp;A</button></div>
+                <div class="item-list"></div><div class="form-wrap"></div>
+            </section>
+        </div>
+        <footer>GC-LACE · Local block-representative content tool · Do not upload Admin.html to the student website.</footer>
+    </main>
+    <script src="gc-lace-data.js"></script>
+    <script>
+        const STORAGE_KEY = "gc-lace-offline-content-v1";
+        const API_ORIGIN = window.location.protocol === "file:" ? "http://localhost:3000" : "";
+        const apiUrl = path => API_ORIGIN + path;
+        let localOnly = false;
+        const definitions = {
+            coursework: {
+                label: "coursework",
+                fields: [
+                    ["title", "Assignment / coursework title", "text", true],
+                    ["course", "Course code", "text", true],
+                    ["courseName", "Course name", "text", true],
+                    ["due", "Due date", "date", false],
+                    ["status", "Status", "select", true, [["pending", "Pending"], ["submitted", "Submitted"]]],
+                    ["submittedDate", "Submission date (if submitted)", "date", false]
+                ],
+                summary: item => item.course + " · " + (item.status === "submitted" ? "Submitted " + (item.submittedDate || "date not set") : "Due " + (item.due || "date not set"))
+            },
+            courses: {
+                label: "course",
+                fields: [
+                    ["code", "Course code", "text", true],
+                    ["title", "Course name", "text", true],
+                    ["reviewer", "Reviewer / resource label", "text", false],
+                    ["reviewerUrl", "Docs Reviewer URL", "url", false],
+                    ["meetUrls", "Google Meet links (one URL per line)", "urls", false],
+                    ["driveUrls", "Google Drive / submission links (one URL per line)", "urls", false]
+                ],
+                summary: item => [
+                    item.reviewer,
+                    item.reviewerUrl && "Docs Reviewer link",
+                    item.meetUrls && item.meetUrls.split(/\r?\n/).filter(Boolean).length + " Meet link(s)",
+                    item.driveUrls && item.driveUrls.split(/\r?\n/).filter(Boolean).length + " Drive link(s)"
+                ].filter(Boolean).join(" · ") || "No links added yet"
+            },
+            announcements: {
+                label: "announcement",
+                fields: [
+                    ["title", "Announcement", "text", true],
+                    ["category", "Audience / category", "text", true],
+                    ["detail", "Date, time, and additional details", "text", false]
+                ],
+                summary: item => [item.category, item.detail].filter(Boolean).join(" · ")
+            },
+            events: {
+                label: "event",
+                fields: [
+                    ["title", "Event name", "text", true],
+                    ["date", "Event date", "date", true],
+                    ["time", "Time", "text", false],
+                    ["detail", "Location / event details", "text", false],
+                    ["link", "Meeting or event link", "url", false]
+                ],
+                summary: item => [item.date, item.time, item.detail, item.link && "Event link"].filter(Boolean).join(" · ")
+            },
+            questions: {
+                label: "Q&A",
+                fields: [
+                    ["question", "Student question", "text", true],
+                    ["answer", "Answer", "textarea", true],
+                    ["course", "Course / category", "text", false]
+                ],
+                summary: item => [item.course, item.answer].filter(Boolean).join(" · ")
+            }
+        };
+
+        const statusElement = document.getElementById("status");
+        function report(message, isError) {
+            statusElement.textContent = message;
+            statusElement.classList.toggle("error", Boolean(isError));
+        }
+        function cloneDefaults() {
+            return JSON.parse(JSON.stringify(window.GC_LACE_DEFAULTS));
+        }
+        function validateData(data) {
+            if (!data || typeof data !== "object" || !data.hero ||
+                typeof data.hero.title !== "string" || typeof data.hero.description !== "string" ||
+                !["coursework", "courses", "announcements", "events", "questions"].every(key => Array.isArray(data[key]))) {
+                throw new Error("This file is not a valid GC-LACE content backup.");
+            }
+            data.courses = data.courses.map(normalizeCourseResources);
+            for (const [key, definition] of Object.entries(definitions)) {
+                const fields = definition.fields;
+                const ids = new Set();
+                for (const item of data[key]) {
+                    if (!item || typeof item.id !== "string" || !item.id || ids.has(item.id) ||
+                        fields.some(([name, , , required]) =>
+                            (required && (typeof item[name] !== "string" || !item[name].trim())) ||
+                            (item[name] !== undefined && typeof item[name] !== "string")
+                        )) {
+                        throw new Error("The " + key + " list in this backup is invalid.");
+                    }
+                    ids.add(item.id);
+                    for (const [name, , type, , options] of fields) {
+                        if (type === "select" && !options.some(([value]) => value === item[name])) {
+                            throw new Error("The " + name + " field in this backup is invalid.");
+                        }
+                        if (type === "date" && item[name]) {
+                            const parts = item[name].split("-").map(Number);
+                            const date = new Date(parts[0], parts[1] - 1, parts[2]);
+                            if (!/^\d{4}-\d{2}-\d{2}$/.test(item[name]) || parts.length !== 3 ||
+                                Number.isNaN(date.valueOf()) || date.getFullYear() !== parts[0] ||
+                                date.getMonth() !== parts[1] - 1 || date.getDate() !== parts[2]) {
+                                throw new Error("The " + name + " field in this backup contains an invalid date.");
+                            }
+                        }
+                    }
+                    for (const [name, , type] of fields) {
+                        if (type !== "url" && type !== "urls" || !item[name]) continue;
+                        const values = type === "urls" ? item[name].split(/\r?\n/).map(value => value.trim()).filter(Boolean) : [item[name]];
+                        for (const value of values) {
+                            try {
+                                const parsed = new URL(value);
+                                if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error();
+                            } catch {
+                                throw new Error("The " + name + " field in this backup contains an invalid link.");
+                            }
+                        }
+                    }
+                }
+            }
+            return data;
+        }
+        function loadLocalData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved ? validateData(JSON.parse(saved)) : cloneDefaults();
+        }
+        async function loadData() {
+            let response;
+            try {
+                response = await fetch(apiUrl("/api/content"));
+            } catch {
+                localOnly = true;
+                return loadLocalData();
+            }
+            if (response.status === 404 || response.status === 405) {
+                localOnly = true;
+                return loadLocalData();
+            }
+            if (!response.ok) throw new Error("Could not load backend content (HTTP " + response.status + ").");
+            return validateData(await response.json());
+        }
+        function normalizeCourseResources(item) {
+            return {
+                ...item,
+                reviewer: typeof item.reviewer === "string" ? item.reviewer.trim() : "",
+                reviewerUrl: typeof item.reviewerUrl === "string" ? item.reviewerUrl.trim() : "",
+                meetUrls: typeof item.meetUrls === "string" ? item.meetUrls :
+                    typeof item.meetUrl === "string" ? item.meetUrl : "",
+                driveUrls: typeof item.driveUrls === "string" ? item.driveUrls :
+                    typeof item.driveUrl === "string" ? item.driveUrl : ""
+            };
+        }
+        let data;
+        async function saveData(message) {
+            if (localOnly) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                    report("Saved in this browser only. Open StudyLace in this browser to view it; run npm start to share it.", false);
+                    renderAll();
+                    return true;
+                } catch (error) {
+                    report("Could not save changes in this browser: " + error.message, true);
+                    return false;
+                }
+            }
+            try {
+                const response = await fetch(apiUrl("/api/content"), {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+                if (response.status === 404 || response.status === 405) {
+                    localOnly = true;
+                    return saveData(message);
+                }
+                if (!response.ok) {
+                    const errorBody = await response.json().catch(() => ({}));
+                    throw new Error(errorBody.error || "Could not save content (HTTP " + response.status + ").");
+                }
+                const saved = await response.json();
+                data = validateData(saved);
+                report(message, false);
+                renderAll();
+                return true;
+            } catch (error) {
+                if (error instanceof TypeError) {
+                    localOnly = true;
+                    return saveData(message);
+                }
+                report("Could not save changes to the backend: " + error.message, true);
+                return false;
+            }
+        }
+        function setFieldValue(field, value) {
+            if (field.type === "select") {
+                field.querySelectorAll("option").forEach(option => option.selected = option.value === value);
+            } else {
+                field.value = value || "";
+            }
+        }
+        function renderHero() {
+            document.getElementById("heroTitle").value = data.hero.title;
+            document.getElementById("heroDescription").value = data.hero.description;
+        }
+        function renderEditor(section, kind) {
+            const definition = definitions[kind];
+            const list = section.querySelector(".item-list");
+            list.replaceChildren();
+            if (!data[kind].length) {
+                const empty = document.createElement("div");
+                empty.className = "empty";
+                empty.textContent = "No " + kind + " yet. Use the button above to add one.";
+                list.append(empty);
+            }
+            data[kind].forEach(item => {
+                const row = document.createElement("article");
+                row.className = "item";
+                const copy = document.createElement("div");
+                copy.className = "item-copy";
+                const title = document.createElement("h3");
+                title.textContent = item.title || item.code || item.question || "Untitled " + definition.label;
+                const summary = document.createElement("p");
+                summary.textContent = definition.summary(item);
+                copy.append(title, summary);
+                const actions = document.createElement("div");
+                actions.className = "item-actions";
+                const edit = document.createElement("button");
+                edit.type = "button";
+                edit.className = "button";
+                edit.textContent = "Edit";
+                edit.addEventListener("click", () => openForm(section, kind, item));
+                const remove = document.createElement("button");
+                remove.type = "button";
+                remove.className = "button danger";
+                remove.textContent = "Delete";
+                remove.addEventListener("click", async () => {
+                    if (!window.confirm("Delete this " + definition.label + "?")) return;
+                    const previousItems = data[kind];
+                    data[kind] = data[kind].filter(entry => entry.id !== item.id);
+                    remove.disabled = true;
+                    renderAll();
+                    const saved = await saveData("Deleted " + definition.label + ".");
+                    if (!saved) {
+                        data[kind] = previousItems;
+                        renderAll();
+                    }
+                });
+                actions.append(edit, remove);
+                row.append(copy, actions);
+                list.append(row);
+            });
+        }
+        function renderAll() {
+            renderHero();
+            document.querySelectorAll(".editor-section").forEach(section => renderEditor(section, section.dataset.kind));
+        }
+        function openForm(section, kind, item) {
+            const definition = definitions[kind];
+            const wrapper = section.querySelector(".form-wrap");
+            wrapper.replaceChildren();
+            wrapper.classList.add("open");
+            const heading = document.createElement("h3");
+            heading.className = "form-title";
+            heading.textContent = (item ? "Edit " : "Add ") + definition.label;
+            const form = document.createElement("form");
+            form.className = "form-grid";
+            const hiddenId = document.createElement("input");
+            hiddenId.type = "hidden";
+            hiddenId.name = "id";
+            hiddenId.value = item ? item.id : "";
+            form.append(hiddenId);
+            definition.fields.forEach(([name, labelText, type, required, options]) => {
+                const fieldWrap = document.createElement("div");
+                fieldWrap.className = "field";
+                const label = document.createElement("label");
+                label.textContent = labelText;
+                label.htmlFor = kind + "-" + name;
+                let field;
+                if (type === "select") {
+                    field = document.createElement("select");
+                    options.forEach(([value, text]) => {
+                        const option = document.createElement("option");
+                        option.value = value;
+                        option.textContent = text;
+                        field.append(option);
+                    });
+                } else if (type === "textarea" || type === "urls") {
+                    field = document.createElement("textarea");
+                } else {
+                    field = document.createElement("input");
+                    field.type = type;
+                }
+                field.id = kind + "-" + name;
+                field.name = name;
+                field.required = required;
+                field.maxLength = type === "url" ? 500 : type === "urls" ? 5000 : type === "textarea" ? 1000 : 180;
+                if (type === "url") field.placeholder = "https://example.com/resource";
+                if (type === "urls") {
+                    field.placeholder = "https://meet.google.com/...\nhttps://meet.google.com/...";
+                }
+                setFieldValue(field, item && item[name]);
+                fieldWrap.append(label, field);
+                form.append(fieldWrap);
+            });
+            if (kind === "courses") {
+                const clearResources = document.createElement("button");
+                clearResources.type = "button";
+                clearResources.className = "button danger";
+                clearResources.textContent = "Clear all course resources";
+                clearResources.addEventListener("click", () => {
+                    ["reviewer", "reviewerUrl", "meetUrls", "driveUrls"].forEach(name => {
+                        document.getElementById("courses-" + name).value = "";
+                    });
+                });
+                const fieldWrap = document.createElement("div");
+                fieldWrap.className = "field full";
+                fieldWrap.append(clearResources);
+                form.insertBefore(fieldWrap, form.querySelector(".form-actions"));
+            }
+            const actions = document.createElement("div");
+            actions.className = "field full form-actions";
+            const submit = document.createElement("button");
+            submit.className = "button primary";
+            submit.type = "submit";
+            submit.textContent = item ? "Save changes" : "Add " + definition.label;
+            const cancel = document.createElement("button");
+            cancel.className = "button";
+            cancel.type = "button";
+            cancel.textContent = "Cancel";
+            cancel.addEventListener("click", () => wrapper.classList.remove("open"));
+            actions.append(submit, cancel);
+            form.append(actions);
+            form.addEventListener("submit", async event => {
+                event.preventDefault();
+                const entry = Object.fromEntries(new FormData(form).entries());
+                for (const [name, labelText, type] of definition.fields) {
+                    if ((type === "url" || type === "urls") && entry[name]) {
+                        const values = type === "urls" ? entry[name].split(/\r?\n/).map(value => value.trim()).filter(Boolean) : [entry[name]];
+                        for (const value of values) {
+                            try {
+                                const parsed = new URL(value);
+                                if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error();
+                            } catch {
+                                report(labelText + " must contain only valid http:// or https:// links.", true);
+                                return;
+                            }
+                        }
+                    }
+                }
+                const id = hiddenId.value || kind.slice(0, -1) + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+                let savedItem = Object.assign({}, entry, { id });
+                if (kind === "courses") savedItem = normalizeCourseResources(savedItem);
+                const existingIndex = data[kind].findIndex(existing => existing.id === id);
+                if (existingIndex >= 0) data[kind][existingIndex] = savedItem;
+                else data[kind].unshift(savedItem);
+                const saved = await saveData((item ? "Updated " : "Added ") + definition.label + ".");
+                if (saved) wrapper.classList.remove("open");
+            });
+            wrapper.append(heading, form);
+            wrapper.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        document.getElementById("heroForm").addEventListener("submit", event => {
+            event.preventDefault();
+            data.hero.title = document.getElementById("heroTitle").value.trim();
+            data.hero.description = document.getElementById("heroDescription").value.trim();
+            saveData("Homepage introduction saved.");
+        });
+        document.querySelectorAll(".editor-section").forEach(section => {
+            section.querySelector(".add-button").addEventListener("click", () => openForm(section, section.dataset.kind));
+        });
+        document.getElementById("exportButton").addEventListener("click", () => {
+            const file = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(file);
+            link.download = "gc-lace-content-backup.json";
+            link.click();
+            window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+            report("Content backup exported.", false);
+        });
+        document.getElementById("publishButton").addEventListener("click", () => {
+            saveData("Website updates published to the backend.");
+        });
+        const importInput = document.getElementById("importFile");
+        document.getElementById("importButton").addEventListener("click", () => importInput.click());
+        importInput.addEventListener("change", async () => {
+            const file = importInput.files[0];
+            if (!file) return;
+            try {
+                const imported = validateData(JSON.parse(await file.text()));
+                if (!window.confirm("Replace the current GC-LACE content with this backup?")) return;
+                data = imported;
+                saveData("Backup imported and saved.");
+            } catch (error) {
+                report("Could not import backup: " + error.message, true);
+            } finally {
+                importInput.value = "";
+            }
+        });
+        document.getElementById("resetButton").addEventListener("click", () => {
+            if (!window.confirm("Replace all current content with the original sample content? Export a backup first if you may need these edits.")) return;
+            data = cloneDefaults();
+            saveData("Sample content restored.");
+        });
+        loadData().then(loadedData => {
+            data = loadedData;
+            renderAll();
+            report(localOnly
+                ? "Backend unavailable. Using browser-only mode; changes will not sync to other devices."
+                : "Content loaded from the backend.", false);
+        }).catch(error => {
+            data = cloneDefaults();
+            renderAll();
+            report(error.message + " Showing sample content.", true);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#3E8EB3">
+    <meta name="description" content="GC-LACE is your Gordon College student hub for coursework, course resources, campus updates, and student questions.">
+    <title>GC-LACE — Your campus, connected</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+            <a class="brand" href="#home" aria-label="GC-LACE home">
+                <img class="brand-mark" src="GC-LACE.png" alt="GC-LACE logo">
+                <span><span class="brand-name">GC-<span>LACE</span></span><span class="brand-sub">GORDON COLLEGE STUDENT HUB</span></span>
+            </a>
+            <p class="nav-label">Workspace</p>
+            <nav class="nav">
+                <a class="active" href="#home"><span class="nav-icon">⌂</span>Overview</a>
+                <a href="#coursework"><span class="nav-icon">☑</span>Coursework</a>
+                <a href="#courses"><span class="nav-icon">▤</span>My courses</a>
+                <a href="#announcements"><span class="nav-icon">◉</span>Announcements</a>
+                <a href="#events"><span class="nav-icon">▦</span>Events</a>
+                <a href="#questions"><span class="nav-icon">✳</span>Student Q&amp;A</a>
+            </nav>
+            <div class="side-bottom">
+                <div class="side-note"><strong>A little more connected.</strong>Class updates, useful links, and your coursework—together in one place.</div>
+                <div class="side-footer">Made for Gordon College students<br>GC-LACE · Your campus, connected</div>
+            </div>
+        </aside>
+        <button class="sidebar-overlay" id="sidebarOverlay" type="button" aria-label="Close navigation" tabindex="-1"></button>
+
+        <main class="main" id="home">
+            <header class="topbar">
+                <button class="icon-btn mobile-menu" id="menuToggle" aria-label="Open navigation" aria-expanded="false">☰</button>
+                <div class="breadcrumbs">Workspace <span aria-hidden="true">/</span> <strong>Overview</strong></div>
+                <div class="top-right">
+                    <span class="today" id="todayDate"></span>
+                    <button class="icon-btn" id="notificationButton" aria-label="View announcements">♧<span class="notification-dot"></span></button>
+                    <div class="profile-wrap">
+                        <button class="avatar" id="profileButton" type="button" aria-label="Student profile" aria-expanded="false"><span id="profileInitial">S</span><img id="profileImage" alt="" hidden referrerpolicy="no-referrer"></button>
+                        <div class="profile-menu" id="profileMenu" hidden>
+                            <div class="profile-name" id="profileName">Guest student</div>
+                            <button type="button" data-auth-action="login" id="loginMenuButton">Sign in</button>
+                            <button type="button" data-auth-action="signup" id="signupMenuButton">Sign up</button>
+                            <button type="button" data-auth-action="password" id="passwordMenuButton" hidden>Change password</button>
+                            <button type="button" data-auth-action="logout" id="logoutMenuButton" hidden>Log out</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="welcome" aria-labelledby="welcomeTitle">
+                <div class="welcome-content">
+                    <div class="eyebrow">Your student life, in one place</div>
+                    <h1 id="welcomeTitle"></h1>
+                    <p id="welcomeDescription"></p>
+                    <div class="welcome-actions">
+                        <a class="button" href="#coursework">See my coursework <span aria-hidden="true">→</span></a>
+                        <a class="button outline" href="#courses">Explore courses</a>
+                    </div>
+                </div>
+                <div class="welcome-art" aria-hidden="true"><span class="book"></span><span class="spark one">✳</span><span class="spark two">✳</span></div>
+            </section>
+
+            <div class="grid">
+                <div class="left-column">
+                    <section class="stats" aria-label="Coursework summary">
+                        <article class="stat-card"><span class="stat-icon coral" aria-hidden="true">◷</span><div><div class="stat-number" id="pendingCount">0</div><div class="stat-label">Pending tasks</div></div></article>
+                        <article class="stat-card"><span class="stat-icon yellow" aria-hidden="true">↗</span><div><div class="stat-number" id="dueWeekCount">0</div><div class="stat-label">Due this week</div></div></article>
+                        <article class="stat-card"><span class="stat-icon" aria-hidden="true">✓</span><div><div class="stat-number" id="doneCount">0</div><div class="stat-label">Recently submitted</div></div></article>
+                    </section>
+
+                    <section class="panel" id="coursework" aria-labelledby="courseworkTitle">
+                        <div class="panel-head">
+                            <div><h2 class="panel-title" id="courseworkTitle">Coursework guide</h2><p class="panel-subtitle">Stay on top of what’s due and what’s done.</p><p class="panel-subtitle">Published coursework is view-only. Contact your BSCS 1A block representative about corrections.</p></div>
+                            <div class="filters" role="group" aria-label="Filter coursework">
+                                <button class="filter-btn active" data-filter="all">All</button>
+                                <button class="filter-btn" data-filter="pending">Pending</button>
+                                <button class="filter-btn" data-filter="submitted">Submitted</button>
+                            </div>
+                        </div>
+                        <div class="task-list" id="taskList"></div>
+                    </section>
+
+                    <section class="panel" id="courses" aria-labelledby="coursesTitle">
+                        <div class="panel-head"><div><h2 class="panel-title" id="coursesTitle">Your courses</h2><p class="panel-subtitle">Reviewers, class links, and course materials in one spot.</p></div></div>
+                        <div class="course-list" id="courseList"></div>
+                    </section>
+                </div>
+
+                <div class="right-column">
+                    <section class="panel" id="announcements" aria-labelledby="announcementsTitle">
+                        <div class="panel-head"><div><h2 class="panel-title" id="announcementsTitle">Campus updates</h2><p class="panel-subtitle">A quick look at what’s happening.</p></div><span class="text-link">Recent</span></div>
+                        <div id="announcementList"></div>
+                        <p style="margin:12px 0 0;color:var(--muted);font-size:9px;line-height:1.5">Confirm dates and details with official class and college channels.</p>
+                    </section>
+
+                    <section class="panel" id="events" aria-labelledby="eventsTitle">
+                        <div class="panel-head"><div><h2 class="panel-title" id="eventsTitle">Upcoming events</h2><p class="panel-subtitle">Save a spot in your schedule.</p></div></div>
+                        <div id="eventList"></div>
+                    </section>
+
+                    <section class="panel" id="questions" aria-labelledby="questionsTitle">
+                        <div class="panel-head"><div><h2 class="panel-title" id="questionsTitle">Student Q&amp;A</h2><p class="panel-subtitle">Got a question for your classmates?</p></div></div>
+                        <div class="qa-card"><p>Browse answers from your block representative, or send a question for them to review. Student questions are only saved in this page preview.</p>
+                            <form class="ask-form" id="questionForm">
+                                <label class="sr-only" for="questionInput">Your question</label>
+                                <input id="questionInput" name="question" placeholder="Type your question…" required maxlength="180" autocomplete="off">
+                                <button class="send-btn" type="submit" aria-label="Add question">↑</button>
+                            </form>
+                            <div class="qa-message" id="qaMessage" role="status" aria-live="polite"></div>
+                            <div class="question-list" id="questionList" aria-live="polite"></div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+            <footer class="footer">GC-LACE · Your campus, connected<br>Read-only student view · Contact your BSCS 1A block representative to request a content update.<br>Project lead: Nuel Gabriel Dela Cruz · Web design: Jam · Course resources: Ash &amp; Ricah · Updates: Nuel &amp; Joana</footer>
+        </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="auth-modal" id="authModal" hidden>
+        <div class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+            <button class="auth-close" type="button" aria-label="Close">&times;</button>
+            <h2 id="authTitle">Sign in</h2>
+            <p class="auth-domain" id="authDomain">Use an @gordoncollege.edu.ph email with a password, or use Google for verified sign-in and your profile photo.</p>
+            <form id="authForm">
+                <label id="nameField" hidden>Name<input id="authName" maxlength="80" autocomplete="name"></label>
+                <label id="emailField">Email<input id="authEmail" type="email" required autocomplete="email" placeholder="student@gordoncollege.edu.ph"></label>
+                <label id="currentPasswordField"><span id="passwordFieldLabel">Password</span><input id="authPassword" type="password" required minlength="8" autocomplete="current-password"></label>
+                <label id="confirmPasswordField" hidden>Confirm password<input id="authConfirmPassword" type="password" minlength="8" autocomplete="new-password"></label>
+                <label id="newPasswordField" hidden>New password<input id="authNewPassword" type="password" minlength="8" autocomplete="new-password"></label>
+                <div class="auth-message" id="authMessage" role="status" aria-live="polite"></div>
+                <button class="auth-submit" type="submit">Sign in</button>
+            </form>
+            <section id="googleSignInSection" hidden>
+                <p class="auth-or">Or use Google for verified sign-in and your Google profile photo</p>
+                <div class="google-sign-in" id="googleSignInButton"></div>
+                <div class="auth-message" id="googleAuthMessage" role="status" aria-live="polite"></div>
+            </section>
+        </div>
+    </div>
+    <script src="gc-lace-data.js"></script>
+    <script>
+        const dateElement = document.getElementById("todayDate");
+        dateElement.textContent = new Intl.DateTimeFormat("en-PH", { weekday: "short", month: "short", day: "numeric" }).format(new Date());
+
+        const toast = document.getElementById("toast");
+        let toastTimeout;
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add("show");
+            window.clearTimeout(toastTimeout);
+            toastTimeout = window.setTimeout(() => toast.classList.remove("show"), 2800);
+        }
+
+        let contentData = JSON.parse(JSON.stringify(window.GC_LACE_DEFAULTS));
+        let studentQuestions = [];
+        const API_ORIGIN = window.location.protocol === "file:" ? "http://localhost:3000" : "";
+        const apiUrl = path => API_ORIGIN + path;
+        const OFFLINE_CONTENT_KEY = "gc-lace-offline-content-v1";
+        const OFFLINE_COURSEWORK_KEY = "gc-lace-offline-coursework-v1";
+
+        function readLocalJson(key, fallback) {
+            try {
+                const saved = localStorage.getItem(key);
+                return saved ? JSON.parse(saved) : fallback;
+            } catch {
+                return fallback;
+            }
+        }
+
+        function getOfflineChanges() {
+            return readLocalJson(OFFLINE_COURSEWORK_KEY, {});
+        }
+
+        function saveOfflineChange(item, submitted) {
+            const changes = getOfflineChanges();
+            changes[item.id] = {
+                submitted,
+                submittedDate: submitted ? item.submittedDate || new Date().toISOString().slice(0, 10) : ""
+            };
+            localStorage.setItem(OFFLINE_COURSEWORK_KEY, JSON.stringify(changes));
+        }
+
+        function applyOfflineChanges() {
+            const changes = getOfflineChanges();
+            contentData.coursework.forEach(item => {
+                if (!changes[item.id]) return;
+                item.status = changes[item.id].submitted ? "submitted" : "pending";
+                item.submittedDate = changes[item.id].submittedDate || "";
+            });
+        }
+
+        async function syncOfflineChanges() {
+            const changes = getOfflineChanges();
+            for (const [id, change] of Object.entries(changes)) {
+                try {
+                    const response = await fetch(apiUrl("/api/coursework/" + encodeURIComponent(id)), {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ submitted: change.submitted })
+                    });
+                    if (!response.ok) throw new Error();
+                    delete changes[id];
+                } catch {
+                    break;
+                }
+            }
+            localStorage.setItem(OFFLINE_COURSEWORK_KEY, JSON.stringify(changes));
+        }
+
+        function formatDate(dateString, options) {
+            if (!dateString) return "";
+            const parts = dateString.split("-").map(Number);
+            if (parts.length !== 3 || parts.some(Number.isNaN)) return dateString;
+            return new Intl.DateTimeFormat("en-PH", options || { month: "short", day: "numeric" })
+                .format(new Date(parts[0], parts[1] - 1, parts[2]));
+        }
+        function createResourceLink(label, url) {
+            if (!url) return null;
+            const link = document.createElement("a");
+            link.className = "course-detail";
+            link.textContent = label;
+            try {
+                const parsed = new URL(url);
+                if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error("Unsupported link protocol");
+                link.href = parsed.href;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+            } catch (error) {
+                link.textContent = label + " (invalid link)";
+                link.removeAttribute("href");
+            }
+            return link;
+        }
+        function createStudentQuestion(text) {
+            const question = document.createElement("p");
+            question.className = "question-item";
+            question.append(document.createTextNode(text));
+            const note = document.createElement("span");
+            note.textContent = "Added to this page preview only · Not sent to the block representative";
+            question.append(note);
+            return question;
+        }
+        function renderContent() {
+            document.getElementById("welcomeTitle").textContent = contentData.hero.title;
+            document.getElementById("welcomeDescription").textContent = contentData.hero.description;
+
+            const taskList = document.getElementById("taskList");
+            taskList.replaceChildren();
+            contentData.coursework.forEach(item => {
+                const task = document.createElement("label");
+                task.className = "task";
+                task.dataset.status = item.status === "submitted" ? "submitted" : "pending";
+                task.dataset.id = item.id;
+                const checkbox = document.createElement("input");
+                checkbox.className = "check";
+                checkbox.type = "checkbox";
+                checkbox.checked = task.dataset.status === "submitted";
+                checkbox.setAttribute("aria-label", item.title + ": " + (checkbox.checked ? "submitted" : "pending"));
+                checkbox.addEventListener("change", async () => {
+                    const submitted = checkbox.checked;
+                    checkbox.disabled = true;
+                    try {
+                        const response = await fetch(apiUrl("/api/coursework/" + encodeURIComponent(item.id)), {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ submitted })
+                        });
+                        const updated = await response.json();
+                        if (!response.ok) throw new Error(updated.error || "Could not update coursework.");
+                        Object.assign(item, updated);
+                        const changes = getOfflineChanges();
+                        delete changes[item.id];
+                        localStorage.setItem(OFFLINE_COURSEWORK_KEY, JSON.stringify(changes));
+                        renderContent();
+                        showToast(submitted ? "Coursework submitted." : "Submission removed.");
+                    } catch (error) {
+                        item.status = submitted ? "submitted" : "pending";
+                        item.submittedDate = submitted ? new Date().toISOString().slice(0, 10) : "";
+                        saveOfflineChange(item, submitted);
+                        checkbox.disabled = false;
+                        renderContent();
+                        showToast("Offline mode: submission saved on this device.");
+                    }
+                });
+                const content = document.createElement("span");
+                content.className = "task-content";
+                const title = document.createElement("span");
+                title.className = "task-title";
+                title.textContent = item.title;
+                title.classList.toggle("completed", checkbox.checked);
+                const meta = document.createElement("span");
+                meta.className = "task-meta";
+                const course = document.createElement("span");
+                course.textContent = item.course + " · " + item.courseName;
+                const date = document.createElement("span");
+                if (checkbox.checked) {
+                    date.textContent = "Submitted " + (formatDate(item.submittedDate) || "date not set");
+                } else {
+                    date.className = "due";
+                    date.textContent = "Due " + (formatDate(item.due) || "date not set");
+                    const dueParts = item.due ? item.due.split("-").map(Number) : [];
+                    if (dueParts.length === 3 && !dueParts.some(Number.isNaN)) {
+                        const dueDate = new Date(dueParts[0], dueParts[1] - 1, dueParts[2]);
+                        const daysLeft = (dueDate - new Date(new Date().setHours(0, 0, 0, 0))) / 86400000;
+                        if (daysLeft >= 0 && daysLeft <= 2) date.classList.add("soon");
+                    }
+                }
+                meta.append(course, date);
+                content.append(title, meta);
+                const badge = document.createElement("span");
+                badge.className = checkbox.checked ? "badge review" : "badge";
+                badge.textContent = checkbox.checked ? "Submitted" : "To do";
+                task.append(checkbox, content, badge);
+                taskList.append(task);
+            });
+
+            const courseList = document.getElementById("courseList");
+            courseList.replaceChildren();
+            const courseIcons = ["⌘", "⌨", "✳", "∑"];
+            contentData.courses.forEach((item, index) => {
+                const course = document.createElement("article");
+                course.className = "course";
+
+                const toggle = document.createElement("button");
+                toggle.className = "course-toggle";
+                toggle.type = "button";
+                toggle.setAttribute("aria-expanded", "false");
+                const resourcesId = "course-resources-" + index;
+                toggle.setAttribute("aria-controls", resourcesId);
+
+                const symbol = document.createElement("span");
+                symbol.className = "course-symbol";
+                symbol.setAttribute("aria-hidden", "true");
+                symbol.textContent = courseIcons[index % courseIcons.length];
+                const info = document.createElement("span");
+                info.className = "course-info";
+                const name = document.createElement("span");
+                name.className = "course-name";
+                name.textContent = item.title;
+                const code = document.createElement("span");
+                code.className = "course-detail";
+                code.textContent = item.code;
+                info.append(name, code);
+                const arrow = document.createElement("span");
+                arrow.className = "course-arrow";
+                arrow.setAttribute("aria-hidden", "true");
+                arrow.textContent = "›";
+                toggle.append(symbol, info, arrow);
+
+                const resources = document.createElement("div");
+                resources.className = "course-resources";
+                resources.id = resourcesId;
+                resources.hidden = true;
+
+                let resourceCount = 0;
+                function addResourceGroup(label, urls, description) {
+                    if (!urls) return;
+                    const entries = urls.split(/\r?\n/).map(url => url.trim()).filter(Boolean);
+                    if (!entries.length) return;
+
+                    const group = document.createElement("div");
+                    group.className = "course-resource-group";
+                    const heading = document.createElement("span");
+                    heading.className = "course-resource-heading";
+                    heading.textContent = label;
+                    group.append(heading);
+                    if (description) {
+                        const note = document.createElement("span");
+                        note.className = "course-detail";
+                        note.textContent = description;
+                        group.append(note);
+                    }
+                    entries.forEach((url, linkIndex) => {
+                        const linkLabel = entries.length > 1 ? label + " " + (linkIndex + 1) : "Open " + label;
+                        const link = createResourceLink(linkLabel, url);
+                        if (link) group.append(link);
+                    });
+                    if (group.querySelector("a")) {
+                        resources.append(group);
+                        resourceCount += 1;
+                    }
+                }
+
+                addResourceGroup("Reviewer", item.reviewerUrl, item.reviewer);
+                addResourceGroup("Google Meet", item.meetUrls);
+                addResourceGroup("Google Drive", item.driveUrls);
+
+                if (!resourceCount) {
+                    const empty = document.createElement("span");
+                    empty.className = "course-detail";
+                    empty.textContent = "No course resources have been added.";
+                    resources.append(empty);
+                }
+
+                toggle.addEventListener("click", () => {
+                    const isOpen = toggle.getAttribute("aria-expanded") === "true";
+                    toggle.setAttribute("aria-expanded", String(!isOpen));
+                    course.classList.toggle("open", !isOpen);
+                    resources.hidden = isOpen;
+                });
+
+                course.append(toggle, resources);
+                courseList.append(course);
+            });
+            if (!contentData.courses.length) {
+                const empty = document.createElement("p");
+                empty.className = "panel-subtitle";
+                empty.textContent = "Course resources will appear here when added.";
+                courseList.append(empty);
+            }
+
+            const announcementList = document.getElementById("announcementList");
+            announcementList.replaceChildren();
+            const announcementIcons = ["📣", "◷", "✦", "⌂"];
+            contentData.announcements.forEach((item, index) => {
+                const article = document.createElement("article");
+                article.className = "announcement";
+                const icon = document.createElement("span");
+                icon.className = "announcement-icon" + (index % 2 ? " blue" : index === 2 ? " green" : "");
+                icon.setAttribute("aria-hidden", "true");
+                icon.textContent = announcementIcons[index % announcementIcons.length];
+                const text = document.createElement("div");
+                const title = document.createElement("div");
+                title.className = "announcement-title";
+                title.textContent = item.title;
+                const meta = document.createElement("div");
+                meta.className = "announcement-meta";
+                const category = document.createElement("span");
+                category.className = "announcement-type";
+                category.textContent = item.category;
+                meta.append(category);
+                if (item.detail) meta.append(document.createTextNode(" · " + item.detail));
+                text.append(title, meta);
+                article.append(icon, text);
+                announcementList.append(article);
+            });
+            if (!contentData.announcements.length) announcementList.textContent = "No announcements yet.";
+
+            const eventList = document.getElementById("eventList");
+            eventList.replaceChildren();
+            const today = new Date();
+            const todayKey = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
+            const upcomingEvents = contentData.events.filter(item => item.date >= todayKey).slice().sort((a, b) => a.date.localeCompare(b.date));
+            upcomingEvents.forEach(item => {
+                const article = document.createElement("article");
+                article.className = "event";
+                const date = document.createElement("div");
+                date.className = "event-date";
+                const day = document.createElement("strong");
+                const dateParts = item.date.split("-");
+                day.textContent = dateParts.length === 3 ? String(Number(dateParts[2])) : "—";
+                const month = document.createElement("span");
+                month.textContent = dateParts.length === 3 ? formatDate(item.date, { month: "short" }) : "TBD";
+                date.append(day, month);
+                const title = document.createElement("div");
+                title.className = "event-title";
+                title.textContent = item.title;
+                const detail = document.createElement("div");
+                detail.className = "event-meta";
+                detail.textContent = [item.time, item.detail].filter(Boolean).join(" · ");
+                article.append(date, title, detail);
+                const link = createResourceLink("Join / event link ↗", item.link);
+                if (link) {
+                    link.classList.add("event-meta");
+                    article.append(link);
+                }
+                eventList.append(article);
+            });
+            if (!upcomingEvents.length) eventList.textContent = "No upcoming events yet.";
+            const questionList = document.getElementById("questionList");
+            questionList.replaceChildren();
+            contentData.questions.forEach(item => {
+                const entry = document.createElement("article");
+                entry.className = "question-item";
+                const question = document.createElement("strong");
+                question.textContent = item.question;
+                const answer = document.createElement("div");
+                answer.textContent = item.answer;
+                answer.style.marginTop = "6px";
+                entry.append(question, answer);
+                if (item.course) {
+                    const category = document.createElement("span");
+                    category.textContent = item.course;
+                    entry.append(category);
+                }
+                questionList.append(entry);
+            });
+            studentQuestions.forEach(text => questionList.append(createStudentQuestion(text)));
+            updateCounts();
+            const activeFilter = document.querySelector(".filter-btn.active").dataset.filter;
+            document.querySelectorAll(".task").forEach(task => {
+                task.hidden = activeFilter !== "all" && task.dataset.status !== activeFilter;
+            });
+        }
+
+        const filters = document.querySelectorAll(".filter-btn");
+        filters.forEach((button) => {
+            button.addEventListener("click", () => {
+                filters.forEach((item) => item.classList.toggle("active", item === button));
+                document.querySelectorAll(".task").forEach((task) => {
+                    task.hidden = button.dataset.filter !== "all" && task.dataset.status !== button.dataset.filter;
+                });
+            });
+        });
+
+        function updateCounts() {
+            document.getElementById("pendingCount").textContent = contentData.coursework.filter(item => item.status !== "submitted").length;
+            document.getElementById("doneCount").textContent = contentData.coursework.filter(item => item.status === "submitted").length;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const weekEnd = new Date(today);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+            document.getElementById("dueWeekCount").textContent = contentData.coursework.filter(item => {
+                if (item.status === "submitted" || !item.due) return false;
+                const parts = item.due.split("-").map(Number);
+                if (parts.length !== 3 || parts.some(Number.isNaN)) return false;
+                const due = new Date(parts[0], parts[1] - 1, parts[2]);
+                return due >= today && due < weekEnd;
+            }).length;
+        }
+
+        async function loadBackendContent() {
+            try {
+                const response = await fetch(apiUrl("/api/content"));
+                if (!response.ok) throw new Error("Could not load website content.");
+                contentData = await response.json();
+                contentData.courses = contentData.courses.map(item => ({
+                    ...item,
+                    meetUrls: typeof item.meetUrls === "string" ? item.meetUrls :
+                        typeof item.meetUrl === "string" ? item.meetUrl : "",
+                    driveUrls: typeof item.driveUrls === "string" ? item.driveUrls :
+                        typeof item.driveUrl === "string" ? item.driveUrl : ""
+                }));
+                applyOfflineChanges();
+                localStorage.setItem(OFFLINE_CONTENT_KEY, JSON.stringify(contentData));
+                studentQuestions = (contentData.studentQuestions || []).map(item =>
+                    typeof item === "string" ? item : item.question
+                );
+                renderContent();
+                document.getElementById("questionList").replaceChildren();
+                studentQuestions.forEach(text => {
+                    document.getElementById("questionList").append(createStudentQuestion(text));
+                });
+                syncOfflineChanges();
+            } catch (error) {
+                const cachedContent = readLocalJson(OFFLINE_CONTENT_KEY, null);
+                if (cachedContent) {
+                    contentData = cachedContent;
+                }
+                applyOfflineChanges();
+                showToast("Using offline website content.");
+                renderContent();
+            }
+        }
+
+        loadBackendContent();
+
+        const profileButton = document.getElementById("profileButton");
+        const profileMenu = document.getElementById("profileMenu");
+        const authModal = document.getElementById("authModal");
+        const authForm = document.getElementById("authForm");
+        const authMessage = document.getElementById("authMessage");
+        const googleAuthMessage = document.getElementById("googleAuthMessage");
+        const profileImage = document.getElementById("profileImage");
+        const profileInitial = document.getElementById("profileInitial");
+        let authMode = "login";
+        let currentUser = null;
+        let googleSignInMessage = "";
+        let googleSignInAvailable = false;
+
+        function openAuth(mode) {
+            authMode = mode;
+            document.getElementById("authTitle").textContent =
+                mode === "signup" ? "Create account" : mode === "password" ? "Change password" : "Sign in";
+            document.getElementById("nameField").hidden = mode !== "signup";
+            document.getElementById("authName").required = mode === "signup";
+            document.getElementById("emailField").hidden = mode === "password";
+            document.getElementById("authEmail").required = mode !== "password";
+            document.getElementById("passwordFieldLabel").textContent = mode === "password" ? "Current password" : "Password";
+            document.getElementById("authPassword").value = "";
+            document.getElementById("authConfirmPassword").value = "";
+            document.getElementById("confirmPasswordField").hidden = mode !== "signup";
+            document.getElementById("authConfirmPassword").required = mode === "signup";
+            document.getElementById("newPasswordField").hidden = mode !== "password";
+            document.getElementById("authNewPassword").value = "";
+            document.getElementById("authNewPassword").required = mode === "password";
+            document.getElementById("googleSignInSection").hidden = mode === "password" || !googleSignInAvailable;
+            authMessage.textContent = "";
+            googleAuthMessage.textContent = googleSignInMessage;
+            profileMenu.hidden = true;
+            profileButton.setAttribute("aria-expanded", "false");
+            authModal.hidden = false;
+            document.querySelector(".auth-submit").textContent =
+                mode === "signup" ? "Create account" : mode === "password" ? "Change password" : "Sign in";
+        }
+
+        async function refreshProfile() {
+            const response = await fetch(apiUrl("/api/auth/me"), { credentials: "include" });
+            if (!response.ok) throw new Error("Could not check your sign-in status.");
+            currentUser = await response.json();
+            profileInitial.textContent = currentUser ? currentUser.name.trim().charAt(0).toUpperCase() : "S";
+            profileImage.hidden = !currentUser || !currentUser.picture;
+            profileImage.removeAttribute("src");
+            if (!profileImage.hidden) profileImage.src = currentUser.picture;
+            document.getElementById("profileName").textContent = currentUser ? currentUser.name + " · " + currentUser.email : "Guest student";
+            document.getElementById("loginMenuButton").hidden = Boolean(currentUser);
+            document.getElementById("signupMenuButton").hidden = Boolean(currentUser);
+            document.getElementById("passwordMenuButton").hidden = !currentUser || !currentUser.hasPassword;
+            document.getElementById("logoutMenuButton").hidden = !currentUser;
+        }
+
+        async function configureGoogleSignIn() {
+            try {
+                const response = await fetch(apiUrl("/api/auth/config"));
+                const config = await response.json();
+                if (!response.ok) throw new Error(config.error || "Could not load Google sign-in settings.");
+                if (!config.clientId) return;
+                googleSignInAvailable = true;
+                document.getElementById("googleSignInSection").hidden = authMode === "password";
+                const script = document.createElement("script");
+                script.src = "https://accounts.google.com/gsi/client";
+                script.async = true;
+                script.onload = () => {
+                    window.google.accounts.id.initialize({
+                        client_id: config.clientId,
+                        callback: handleGoogleSignIn,
+                        auto_select: false
+                    });
+                    window.google.accounts.id.renderButton(document.getElementById("googleSignInButton"), {
+                        theme: "outline",
+                        size: "large",
+                        shape: "rectangular",
+                        text: "continue_with",
+                        width: 320
+                    });
+                    googleSignInMessage = "";
+                    googleAuthMessage.textContent = "";
+                };
+                script.onerror = () => {
+                    googleSignInMessage = "Could not load Google sign-in. Check your internet connection and try again.";
+                    googleAuthMessage.textContent = googleSignInMessage;
+                };
+                document.head.append(script);
+            } catch (error) {
+                googleSignInAvailable = false;
+                document.getElementById("googleSignInSection").hidden = true;
+                googleAuthMessage.textContent = "";
+            }
+        }
+
+        async function handleGoogleSignIn(response) {
+            googleAuthMessage.textContent = "";
+            try {
+                const result = await fetch(apiUrl("/api/auth/google"), {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ credential: response.credential })
+                });
+                const user = await result.json();
+                if (!result.ok) throw new Error(user.error || "Google sign-in failed.");
+                currentUser = user;
+                await refreshProfile();
+                authModal.hidden = true;
+                showToast(user.created ? "Your account was created." : "Signed in with Google.");
+            } catch (error) {
+                googleAuthMessage.textContent = error.message;
+            }
+        }
+
+        profileButton.addEventListener("click", () => {
+            profileMenu.hidden = !profileMenu.hidden;
+            profileButton.setAttribute("aria-expanded", String(!profileMenu.hidden));
+        });
+        profileMenu.addEventListener("click", async event => {
+            const action = event.target.dataset.authAction;
+            if (!action) return;
+            if (action === "logout") {
+                try {
+                    const response = await fetch(apiUrl("/api/auth/logout"), { method: "POST", credentials: "include" });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || "Could not log out.");
+                    await refreshProfile();
+                    profileMenu.hidden = true;
+                    profileButton.setAttribute("aria-expanded", "false");
+                    showToast("Logged out.");
+                } catch (error) {
+                    showToast(error.message);
+                }
+                return;
+            }
+            openAuth(action);
+        });
+        document.querySelector(".auth-close").addEventListener("click", () => authModal.hidden = true);
+        authModal.addEventListener("click", event => {
+            if (event.target === authModal) authModal.hidden = true;
+        });
+        authForm.addEventListener("submit", async event => {
+            event.preventDefault();
+            authMessage.textContent = "";
+            const submit = document.querySelector(".auth-submit");
+            submit.disabled = true;
+            try {
+                let path;
+                let body;
+                if (authMode === "password") {
+                    path = "/api/auth/password";
+                    body = {
+                        currentPassword: document.getElementById("authPassword").value,
+                        newPassword: document.getElementById("authNewPassword").value
+                    };
+                } else {
+                    path = "/api/auth/" + (authMode === "signup" ? "signup" : "login");
+                    body = {
+                        email: document.getElementById("authEmail").value,
+                        password: document.getElementById("authPassword").value
+                    };
+                    if (authMode === "signup") {
+                        body.name = document.getElementById("authName").value;
+                        body.confirmPassword = document.getElementById("authConfirmPassword").value;
+                    }
+                }
+                const response = await fetch(apiUrl(path), {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Could not complete sign-in.");
+                if (authMode !== "password") await refreshProfile();
+                authModal.hidden = true;
+                showToast(authMode === "signup" ? "Account created." : authMode === "password" ? "Password changed." : "Signed in.");
+            } catch (error) {
+                authMessage.textContent = error instanceof TypeError
+                    ? "The sign-in service is unavailable. Start the website with npm start and open StudyLace from http://localhost:3000."
+                    : error.message;
+            } finally {
+                submit.disabled = false;
+            }
+        });
+        refreshProfile().catch(() => {
+            document.getElementById("profileName").textContent = "Sign-in service unavailable";
+        });
+        configureGoogleSignIn();
+
+        document.getElementById("questionForm").addEventListener("submit", async event => {
+            event.preventDefault();
+            const input = document.getElementById("questionInput");
+            const message = document.getElementById("qaMessage");
+            const questionText = input.value.trim();
+            if (!questionText) {
+                message.textContent = "Enter a question first.";
+                input.focus();
+                return;
+            }
+            try {
+                const response = await fetch(apiUrl("/api/questions"), {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question: questionText })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "Could not send question.");
+                studentQuestions.unshift(questionText);
+                document.getElementById("questionList").prepend(createStudentQuestion(questionText));
+                message.textContent = "Question sent to the block representative.";
+            } catch (error) {
+                message.textContent = error.message;
+                return;
+            }
+            input.value = "";
+        });
+
+        document.getElementById("notificationButton").addEventListener("click", () => {
+            document.getElementById("announcements").scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+        const sidebar = document.getElementById("sidebar");
+        const menuToggle = document.getElementById("menuToggle");
+        const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+        function closeMobileMenu() {
+            sidebar.classList.remove("open");
+            sidebarOverlay.classList.remove("show");
+            menuToggle.setAttribute("aria-expanded", "false");
+            menuToggle.setAttribute("aria-label", "Open navigation");
+        }
+
+        menuToggle.addEventListener("click", () => {
+            const isOpen = sidebar.classList.toggle("open");
+            sidebarOverlay.classList.toggle("show", isOpen);
+            menuToggle.setAttribute("aria-expanded", String(isOpen));
+            menuToggle.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation");
+        });
+
+        sidebarOverlay.addEventListener("click", closeMobileMenu);
+
+        document.addEventListener("click", (event) => {
+            if (!sidebar.classList.contains("open")) return;
+            if (event.target === menuToggle || menuToggle.contains(event.target)) return;
+            if (sidebar.contains(event.target)) return;
+            closeMobileMenu();
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && sidebar.classList.contains("open")) {
+                closeMobileMenu();
+                menuToggle.focus();
+            }
+        });
+
+        window.addEventListener("resize", () => {
+            if (window.innerWidth > 800) closeMobileMenu();
+        });
+
+        sidebar.querySelectorAll(".nav a").forEach((link) => {
+            link.addEventListener("click", () => {
+                closeMobileMenu();
+                sidebar.querySelectorAll(".nav a").forEach((item) => item.classList.toggle("active", item === link));
+            });
+        });
+    </script>
+</body>
+</html>

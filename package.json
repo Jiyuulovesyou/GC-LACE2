@@ -1,0 +1,11 @@
+{
+  "name": "gc-lace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "google-auth-library": "^10.3.0"
+  }
+}
